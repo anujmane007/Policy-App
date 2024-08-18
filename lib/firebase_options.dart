@@ -41,49 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCvl98Uwt-8yloxv6peJCB_SSeVsDGnmn0',
-    appId: '1:1097356537457:android:7a8e05b3342a7ed90d35d0',
-    messagingSenderId: '1097356537457',
-    projectId: 'policyapp-e9a8b',
-    storageBucket: 'policyapp-e9a8b.appspot.com',
+    apiKey: 'Replace with your Key',
+    appId: 'Replace with your Key',
+    messagingSenderId: 'Replace with your Key',
+    projectId: 'Replace with your Key',
+    storageBucket: 'Replace with your Key',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyC5gcTFdqUJQnB0VYGMmG-phYnoIDxqbC4',
-    appId: '1:1097356537457:ios:f76ea3901dfa073d0d35d0',
-    messagingSenderId: '1097356537457',
-    projectId: 'policyapp-e9a8b',
-    storageBucket: 'policyapp-e9a8b.appspot.com',
-    iosBundleId: 'com.example.privacyApp',
+    apiKey: 'Replace with your Key',
+    appId: 'Replace with your Key',
+    messagingSenderId: 'Replace with your Key',
+    projectId: 'Replace with your Key',
+    storageBucket: 'Replace with your Key',
+    iosBundleId: 'Replace with your Key',
   );
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC6UMTtWEmtZkCqIk691rxg_yxdZ8fc5JA',
-    appId: '1:1097356537457:web:e9f3707ccbde031e0d35d0',
-    messagingSenderId: '1097356537457',
-    projectId: 'policyapp-e9a8b',
-    authDomain: 'policyapp-e9a8b.firebaseapp.com',
-    storageBucket: 'policyapp-e9a8b.appspot.com',
-    measurementId: 'G-RJ15QB0SLK',
+    apiKey: 'Replace with your Key',
+    appId: 'Replace with your Key',
+    messagingSenderId: 'Replace with your Key',
+    projectId: 'Replace with your Key',
+    authDomain: 'Replace with your Key',
+    storageBucket: 'Replace with your Key',
+    measurementId: 'Replace with your Key',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyC5gcTFdqUJQnB0VYGMmG-phYnoIDxqbC4',
-    appId: '1:1097356537457:ios:f76ea3901dfa073d0d35d0',
-    messagingSenderId: '1097356537457',
-    projectId: 'policyapp-e9a8b',
-    storageBucket: 'policyapp-e9a8b.appspot.com',
-    iosBundleId: 'com.example.privacyApp',
+    apiKey: 'Replace with your Key',
+    appId: 'Replace with your Key',
+    messagingSenderId: 'Replace with your Key',
+    projectId: 'Replace with your Key',
+    storageBucket: 'Replace with your Key',
+    iosBundleId: 'Replace with your Key',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyC6UMTtWEmtZkCqIk691rxg_yxdZ8fc5JA',
-    appId: '1:1097356537457:web:106f97df48980d9f0d35d0',
-    messagingSenderId: '1097356537457',
-    projectId: 'policyapp-e9a8b',
-    authDomain: 'policyapp-e9a8b.firebaseapp.com',
-    storageBucket: 'policyapp-e9a8b.appspot.com',
-    measurementId: 'G-3ZNFWZN8ES',
+    apiKey: 'Replace with your Key',
+    appId: 'Replace with your Key',
+    messagingSenderId: 'Replace with your Key',
+    projectId: 'Replace with your Key',
+    authDomain: 'Replace with your Key',
+    storageBucket: 'Replace with your Key',
+    measurementId: 'Replace with your Key',
   );
 
 }
