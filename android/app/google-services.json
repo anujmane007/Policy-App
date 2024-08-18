@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1097356537457",
+    "project_id": "policyapp-e9a8b",
+    "storage_bucket": "policyapp-e9a8b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1097356537457:android:7a8e05b3342a7ed90d35d0",
+        "android_client_info": {
+          "package_name": "com.example.privacy_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvl98Uwt-8yloxv6peJCB_SSeVsDGnmn0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
