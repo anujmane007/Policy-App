@@ -40,11 +40,6 @@ class _AddPaymentState extends State<AddPayment> {
       ),
       body: Column(
         children: [
-          // Padding(
-          //   padding: const EdgeInsets.all(16.0),
-          //   child: Text('Policy ID: ${widget.documentId}',
-          //       style: const TextStyle(fontSize: 16)),
-          // ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _getPaymentMethods(),
@@ -59,64 +54,80 @@ class _AddPaymentState extends State<AddPayment> {
 
                 final paymentMethods = snapshot.data!.docs;
 
-                return ListView.builder(
-                  itemCount: paymentMethods.length,
-                  itemBuilder: (context, index) {
-                    // Extracting data from Firestore
-                    Map<String, dynamic> paymentData =
-                        paymentMethods[index].data() as Map<String, dynamic>;
+                // Build DataTable for displaying transaction history
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: const [
+                      DataColumn(label: Text('Sr. No')),
+                      DataColumn(label: Text('Payment Method')),
+                      DataColumn(label: Text('Card/Check/UPI Number')),
+                      DataColumn(label: Text('Payment Amount')),
+                      DataColumn(label: Text('Payee Name')),
+                      DataColumn(label: Text('Transaction Date')),
+                    ],
+                    rows: paymentMethods.asMap().entries.map((entry) {
+                      int index = entry.key;
+                      var paymentData =
+                          entry.value.data() as Map<String, dynamic>;
 
-                    // Build a card for each payment method
-                    return Card(
-                      margin: const EdgeInsets.all(8.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      elevation: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Payment Method: ${paymentData['paymentMethod'] ?? 'Unknown'}',
-                              style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 10),
-                            // Display data based on the payment method
-                            if (paymentData['paymentMethod'] == 'Card') ...[
-                              Text(
-                                  'Card Number: ${paymentData['cardNumber'] ?? ''}'),
-                              Text('Sender: ${paymentData['sender'] ?? ''}'),
-                              Text(
-                                  'Date Of Transaction: ${paymentData['transactionDate'] ?? ''}'),
-                              Text(
-                                  'Payment Amount: ${paymentData['TransactionAmount'] ?? ''}'),
-                            ] else if (paymentData['paymentMethod'] ==
-                                'Check') ...[
-                              Text(
-                                  'Account Number: ${paymentData['accountNumber'] ?? ''}'),
-                              Text(
-                                  'Check Number: ${paymentData['checkNumber'] ?? ''}'),
-                              Text(
-                                  'Check Date: ${paymentData['checkDate'] ?? ''}'),
-                              Text(
-                                  'Payee Name: ${paymentData['payeeName'] ?? ''}'),
-                              Text(
-                                  'Payee Name: ${paymentData['paymentAmountNumber'] ?? ''}'),
-                            ] else if (paymentData['paymentMethod'] ==
-                                'UPI') ...[
-                              Text('UPI ID: ${paymentData['upiId'] ?? ''}'),
-                              Text('Sender: ${paymentData['sender'] ?? ''}'),
-                              Text(
-                                  'Transaction Amount: ${paymentData['TransactionAmount'] ?? ''}'),
-                            ],
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                      String paymentMethod =
+                          paymentData['paymentMethod'] ?? 'Unknown';
+                      String paymentAmount = (paymentData['TransactionAmount']
+                                      ?.toString()
+                                      .isNotEmpty ==
+                                  true
+                              ? paymentData['TransactionAmount'].toString()
+                              : paymentData['paymentAmountNumber']
+                                  ?.toString()) ??
+                          'N/A';
+
+                      //Payment ID No
+                      String transactionid;
+                      if (paymentMethod == 'Card') {
+                        transactionid = paymentData['cardNumber'] ?? 'N/A';
+                      } else if (paymentMethod == 'Check') {
+                        transactionid = paymentData['checkNumber'] ?? 'N/A';
+                      } else if (paymentMethod == 'UPI') {
+                        transactionid = paymentData['upiId'] ?? 'N/A';
+                      } else {
+                        transactionid = 'N/A';
+                      }
+
+                      // Determine transaction date based on payment method
+                      String transactionDate;
+                      if (paymentMethod == 'Card') {
+                        transactionDate =
+                            paymentData['transactionDate'] ?? 'N/A';
+                      } else if (paymentMethod == 'Check') {
+                        transactionDate = paymentData['checkDate'] ?? 'N/A';
+                      } else if (paymentMethod == 'UPI') {
+                        transactionDate =
+                            paymentData['transactionDate'] ?? 'N/A';
+                      } else {
+                        transactionDate = 'N/A';
+                      }
+
+                      // Determine correct payee name field based on payment method
+                      String payeeName;
+                      if (paymentMethod == 'Card' || paymentMethod == 'UPI') {
+                        payeeName = paymentData['sender'] ?? 'N/A';
+                      } else if (paymentMethod == 'Check') {
+                        payeeName = paymentData['payeeName'] ?? 'N/A';
+                      } else {
+                        payeeName = 'N/A';
+                      }
+
+                      return DataRow(cells: [
+                        DataCell(Text((index + 1).toString())), // Sr. No
+                        DataCell(Text(paymentMethod)),
+                        DataCell(Text(transactionid)),
+                        DataCell(Text(paymentAmount)),
+                        DataCell(Text(payeeName)),
+                        DataCell(Text(transactionDate)),
+                      ]);
+                    }).toList(),
+                  ),
                 );
               },
             ),
