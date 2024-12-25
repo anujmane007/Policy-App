@@ -63,6 +63,7 @@ class _AddPaymentState extends State<AddPayment> {
                       DataColumn(label: Text('Payment Method')),
                       DataColumn(label: Text('Card/Check/UPI Number')),
                       DataColumn(label: Text('Payment Amount')),
+                      DataColumn(label: Text('Panalty Charges')),
                       DataColumn(label: Text('Payee Name')),
                       DataColumn(label: Text('Transaction Date')),
                     ],
@@ -108,6 +109,17 @@ class _AddPaymentState extends State<AddPayment> {
                         transactionDate = 'N/A';
                       }
 
+                      String penaltyCharges = 'N/A';
+                      if (paymentMethod == 'Card') {
+                        penaltyCharges = paymentData['Penalty'] ?? 'N/A';
+                      } else if (paymentMethod == 'Check') {
+                        penaltyCharges = paymentData['PenaltyCheck'] ?? 'N/A';
+                      } else if (paymentMethod == 'UPI') {
+                        penaltyCharges = paymentData['PanaltyUpi'] ?? 'N/A';
+                      } else {
+                        transactionDate = 'N/A';
+                      }
+
                       // Determine correct payee name field based on payment method
                       String payeeName;
                       if (paymentMethod == 'Card' || paymentMethod == 'UPI') {
@@ -123,6 +135,7 @@ class _AddPaymentState extends State<AddPayment> {
                         DataCell(Text(paymentMethod)),
                         DataCell(Text(transactionid)),
                         DataCell(Text(paymentAmount)),
+                        DataCell(Text(penaltyCharges)),
                         DataCell(Text(payeeName)),
                         DataCell(Text(transactionDate)),
                       ]);

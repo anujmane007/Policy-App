@@ -36,10 +36,13 @@ class _PaymentMethodState extends State<PaymentMethod> {
 
   // Added missing controllers for 'Other'
   final TextEditingController _otherCardController = TextEditingController();
+  final TextEditingController _panaltyCheckController = TextEditingController();
   final TextEditingController _otherCheckController = TextEditingController();
+  final TextEditingController _panaltyUpiController = TextEditingController();
   final TextEditingController _otherUpiController = TextEditingController();
   final TextEditingController _transactionamountCardController =
       TextEditingController();
+  final TextEditingController _penaltyCardController = TextEditingController();
   final TextEditingController _transactionamountCheckController =
       TextEditingController();
   final TextEditingController _transactionamountUpiController =
@@ -57,6 +60,7 @@ class _PaymentMethodState extends State<PaymentMethod> {
       paymentData['other'] =
           _otherCardController.text; // Added other field for Card
       paymentData['TransactionAmount'] = _transactionamountCardController.text;
+      paymentData['Penalty'] = _penaltyCardController.text;
     } else if (_selectedPaymentMethod == 'Check') {
       paymentData['checkNumber'] = _checkNumberController.text;
       paymentData['checkDate'] = _checkDateController.text;
@@ -65,6 +69,7 @@ class _PaymentMethodState extends State<PaymentMethod> {
       paymentData['paymentAmountWords'] = _paymentAmountWordsController.text;
       paymentData['routingNumber'] = _routingNumberController.text;
       paymentData['accountNumber'] = _accountNumberController.text;
+      paymentData['PenaltyCheck'] = _panaltyCheckController.text;
       paymentData['other'] =
           _otherCheckController.text; // Added other field for Check
       paymentData['TransactionAmount'] = _transactionamountCheckController.text;
@@ -73,6 +78,7 @@ class _PaymentMethodState extends State<PaymentMethod> {
       paymentData['transactionDate'] = _upiTransactionDateController.text;
       paymentData['sender'] =
           _senderController.text; // Added sender field for UPI
+      paymentData['PanaltyUpi'] = _panaltyUpiController.text;
       paymentData['other'] =
           _otherUpiController.text; // Added other field for UPI
       paymentData['TransactionAmount'] =
@@ -159,6 +165,12 @@ class _PaymentMethodState extends State<PaymentMethod> {
               keyboardType: TextInputType.text,
             ),
             const SizedBox(height: 20),
+            TextFormField(
+              controller: _penaltyCardController,
+              decoration: const InputDecoration(labelText: 'Penalty Charges'),
+              keyboardType: TextInputType.text,
+            ),
+            const SizedBox(height: 20),
           ],
         );
       case 'Check':
@@ -234,11 +246,22 @@ class _PaymentMethodState extends State<PaymentMethod> {
                 return null;
               },
             ),
+            const SizedBox(
+              height: 10,
+            ),
+            TextFormField(
+              controller: _panaltyCheckController,
+              decoration: const InputDecoration(labelText: 'Panalty Charges'),
+              keyboardType: TextInputType.text,
+            ),
             const SizedBox(height: 20),
             TextFormField(
               controller: _otherCheckController,
               decoration: const InputDecoration(labelText: 'Other'),
               keyboardType: TextInputType.text,
+            ),
+            const SizedBox(
+              height: 20,
             ),
           ],
         );
@@ -299,6 +322,12 @@ class _PaymentMethodState extends State<PaymentMethod> {
             ),
             const SizedBox(height: 20),
             TextFormField(
+              controller: _panaltyUpiController,
+              decoration: const InputDecoration(labelText: 'Panalty Charges'),
+              keyboardType: TextInputType.text,
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
               controller: _otherUpiController,
               decoration: const InputDecoration(labelText: 'Other'),
               keyboardType: TextInputType.text,
@@ -327,8 +356,13 @@ class _PaymentMethodState extends State<PaymentMethod> {
     _upiTransactionDateController.dispose();
     _otherCardController.dispose();
     _otherCheckController.dispose();
+
     _otherUpiController.dispose();
     _transactionamountCardController.dispose();
+    _penaltyCardController.dispose();
+    _panaltyUpiController.dispose();
+    _panaltyCheckController.dispose();
+
     _transactionamountCheckController.dispose();
     _transactionamountUpiController.dispose();
     super.dispose();

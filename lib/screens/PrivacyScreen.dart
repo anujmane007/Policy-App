@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:privacy_app/screens/payment_home.dart'; // Firestore integration
@@ -40,6 +44,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
   //change
   final _fdNoController = TextEditingController();
   final _fdUsernameController = TextEditingController();
+  final _NomineeNameController = TextEditingController();
   final _fdBankNameController = TextEditingController();
   final _fdInterestRateController = TextEditingController();
   final _fdAmountController = TextEditingController();
@@ -48,10 +53,18 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
   final _fdEndDateController = TextEditingController();
   final _fdMaturityDateController = TextEditingController();
   final _notesController = TextEditingController();
+  final _fdYearsController = TextEditingController();
+  final _fdHolderNameController = TextEditingController();
 
   bool _isEditing = false;
   String? _currentDocumentId;
   bool _showFDFields = false;
+  String? _selectedPremiumTerm;
+  bool _isJointFD = false;
+  String? _base64Image; // To store the Base64 encoded image
+  File? _imageFile; // To store the image file locally
+
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -119,6 +132,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
             : null,
         'fdNo': _fdNoController.text,
         'fdUsername': _fdUsernameController.text,
+        'NomineeName': _NomineeNameController.text,
         'fdBankName': _fdBankNameController.text,
         'interestRate': _fdInterestRateController.text,
         'fdAmount': _fdAmountController.text,
@@ -131,22 +145,26 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
         // 'fdMaturityAmount': _fdMaturityAmount.text.isNotEmpty
         //     ? double.parse(_fdMaturityAmount.text)
         //     : null,
+        'isJointFD': _isJointFD,
+        'fdHolderName': _isJointFD ? _fdHolderNameController.text : '',
         'ageOfCommencement': _ageController.text.isNotEmpty
             ? int.parse(_ageController.text)
             : null,
-        'premiumAmountPerFrequency': _premiumAmountController.text.isNotEmpty
-            ? double.parse(_premiumAmountController.text)
-            : null,
+        // 'premiumAmountPerFrequency': _premiumAmountController.text.isNotEmpty
+        //     ? double.parse(_premiumAmountController.text)
+        //     : null,
         'sumAssured': _sumAssuredController.text.isNotEmpty
             ? double.parse(_sumAssuredController.text)
             : null,
         'policyTerm': _policyTermController.text.isNotEmpty
             ? int.parse(_policyTermController.text)
             : null,
+        'premiumTerm': _selectedPremiumTerm,
         'premiumPayingTerm': _premiumPayingTermController.text.isNotEmpty
             ? int.parse(_premiumPayingTermController.text)
             : null,
         'notes': _notesController.text,
+        'image': _base64Image,
       };
 
       try {
@@ -226,6 +244,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
     _fdNoController.clear();
     _fdAmountController.clear();
     _fdUsernameController.clear();
+    _NomineeNameController.clear();
     _fdBankNameController.clear();
     _fdInterestRateController.clear();
     _fdMaturityAmountController.clear();
@@ -258,8 +277,8 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
         ? dateFormat.format(doc['finalPremiumDueDate'].toDate())
         : '';
     _ageController.text = doc['ageOfCommencement']?.toString() ?? '';
-    _premiumAmountController.text =
-        doc['premiumAmountPerFrequency']?.toString() ?? '';
+    // _premiumAmountController.text =
+    //     doc['premiumAmountPerFrequency']?.toString() ?? '';
     _sumAssuredController.text = doc['sumAssured']?.toString() ?? '';
     _policyTermController.text = doc['policyTerm']?.toString() ?? '';
     _premiumPayingTermController.text =
@@ -268,6 +287,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
     // FD-related fields
     _fdNoController.text = doc['fdNo'] ?? '';
     _fdUsernameController.text = doc['fdUsername'] ?? '';
+    _NomineeNameController.text = doc['NomineeName'] ?? '';
     _fdBankNameController.text = doc['fdBankName'] ?? '';
     _fdInterestRateController.text = doc['interestRate'] ?? '';
     _fdAmountController.text = doc['fdAmount'] ?? '';
@@ -317,6 +337,52 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
           // Update the policy term controller
           _policyTermController.text = policyTerm.toString();
         }
+      });
+    }
+  }
+
+  Future<void> _selectFDDate(
+      BuildContext context, TextEditingController controller) async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        controller.text = dateFormat.format(picked);
+
+        // Calculate FD Years if both start date and end date are provided
+        if (_fdStartDateController.text.isNotEmpty &&
+            _fdEndDateController.text.isNotEmpty) {
+          final startDate = dateFormat.parse(_fdStartDateController.text);
+          final endDate = dateFormat.parse(_fdEndDateController.text);
+
+          // Calculate the difference in years
+          int fdYears = endDate.year - startDate.year;
+          if (endDate.month < startDate.month ||
+              (endDate.month == startDate.month &&
+                  endDate.day < startDate.day)) {
+            fdYears--;
+          }
+
+          // Update the FD years controller
+          _fdYearsController.text = fdYears.toString();
+        }
+      });
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+        _base64Image = base64Encode(
+            _imageFile!.readAsBytesSync()); // Convert image to Base64
       });
     }
   }
@@ -391,7 +457,39 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 if (_showFDFields) ...[
                   TextFormField(
                     controller: _fdUsernameController,
-                    decoration: const InputDecoration(labelText: 'FD Username'),
+                    decoration:
+                        const InputDecoration(labelText: 'FD Holder Name'),
+                    enabled: _isEditing,
+                  ),
+                  const SizedBox(height: 16.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Is Joint FD?'),
+                      Switch(
+                        value: _isJointFD,
+                        onChanged: (bool value) {
+                          setState(() {
+                            _isJointFD = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  if (_isJointFD) ...[
+                    const SizedBox(height: 16.0),
+                    TextFormField(
+                      controller: _fdHolderNameController,
+                      decoration: const InputDecoration(
+                          labelText: '2nd FD Holder Name'),
+                      enabled: _isEditing,
+                    ),
+                  ],
+                  const SizedBox(height: 16.0),
+                  TextFormField(
+                    controller: _NomineeNameController,
+                    decoration:
+                        const InputDecoration(labelText: 'Nominee Name'),
                     enabled: _isEditing,
                   ),
                   const SizedBox(height: 16.0),
@@ -415,7 +513,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     enabled: _isEditing,
                     onTap: () {
                       if (_isEditing) {
-                        _selectDate(context, _fdStartDateController);
+                        _selectFDDate(context, _fdStartDateController);
                       }
                     },
                   ),
@@ -426,9 +524,15 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     enabled: _isEditing,
                     onTap: () {
                       if (_isEditing) {
-                        _selectDate(context, _fdEndDateController);
+                        _selectFDDate(context, _fdEndDateController);
                       }
                     },
+                  ),
+                  const SizedBox(height: 16.0),
+                  TextFormField(
+                    controller: _fdYearsController,
+                    decoration: const InputDecoration(labelText: 'FD Years'),
+                    enabled: false, // FD years are calculated automatically
                   ),
                   const SizedBox(height: 16.0),
                   TextFormField(
@@ -453,6 +557,16 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     enabled: _isEditing,
                     keyboardType: TextInputType.number,
                   ),
+                  const SizedBox(height: 16.0),
+                  ElevatedButton(
+                    onPressed: _pickImage,
+                    child: Text('Upload Image'),
+                  ),
+                  if (_imageFile != null) ...[
+                    const SizedBox(height: 16.0),
+                    Image.file(_imageFile!,
+                        height: 100, width: 100, fit: BoxFit.cover),
+                  ],
                 ],
                 // Common fields for Insurance and Policy
                 if (!_showFDFields) ...[
@@ -542,11 +656,26 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     },
                   ),
                   const SizedBox(height: 16.0),
-                  TextFormField(
-                    controller: _premiumAmountController,
+                  DropdownButtonFormField<String>(
+                    value: _selectedPremiumTerm,
                     decoration: const InputDecoration(
-                        labelText: 'Premium Amount Per Frequency'),
-                    enabled: _isEditing,
+                      labelText: 'Premium Term',
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'Annually', child: Text('Annually')),
+                      DropdownMenuItem(
+                          value: 'Semiannually', child: Text('Semiannually')),
+                      DropdownMenuItem(
+                          value: 'Quarterly', child: Text('Quarterly')),
+                    ],
+                    onChanged: _isEditing
+                        ? (value) {
+                            setState(() {
+                              _selectedPremiumTerm = value;
+                            });
+                          }
+                        : null, // Disable dropdown when _isEditing is false
                   ),
                   const SizedBox(height: 16.0),
                   TextFormField(
@@ -561,6 +690,16 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         const InputDecoration(labelText: 'Policy Term (years)'),
                     enabled: _isEditing,
                   ),
+                  const SizedBox(height: 16.0),
+                  ElevatedButton(
+                    onPressed: _pickImage,
+                    child: Text('Upload Image'),
+                  ),
+                  if (_imageFile != null) ...[
+                    const SizedBox(height: 16.0),
+                    Image.file(_imageFile!,
+                        height: 100, width: 100, fit: BoxFit.cover),
+                  ],
                 ],
 
                 const SizedBox(height: 20),
