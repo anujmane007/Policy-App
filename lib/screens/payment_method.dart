@@ -119,17 +119,40 @@ class _PaymentMethodState extends State<PaymentMethod> {
                 return null;
               },
             ),
+            // const SizedBox(height: 20),
+            // TextFormField(
+            //   controller: _transactionDateController,
+            //   decoration: const InputDecoration(
+            //       labelText: 'Transaction Date (DD/MM/YY)'),
+            //   keyboardType: TextInputType.datetime,
+            //   validator: (value) {
+            //     if (value == null || value.isEmpty) {
+            //       return 'Please enter transaction date';
+            //     }
+            //     return null;
+            //   },
+            // ),
             const SizedBox(height: 20),
             TextFormField(
               controller: _transactionDateController,
               decoration: const InputDecoration(
-                  labelText: 'Transaction Date (DD/MM/YY)'),
-              keyboardType: TextInputType.datetime,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter transaction date';
+                labelText: 'Transaction Date (DD/MM/YY)',
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
+              readOnly: true,
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2101),
+                );
+                if (pickedDate != null) {
+                  setState(() {
+                    _transactionDateController.text =
+                        "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                  });
                 }
-                return null;
               },
             ),
             const SizedBox(height: 20),
@@ -191,16 +214,39 @@ class _PaymentMethodState extends State<PaymentMethod> {
               },
             ),
             const SizedBox(height: 20),
+            // TextFormField(
+            //   controller: _checkDateController,
+            //   decoration: const InputDecoration(
+            //       labelText: 'Transaction Date (DD/MM/YYYY)'),
+            //   keyboardType: TextInputType.datetime,
+            //   validator: (value) {
+            //     if (value == null || value.isEmpty) {
+            //       return 'Please enter the date';
+            //     }
+            //     return null;
+            //   },
+            // ),
+            // const SizedBox(height: 20),
             TextFormField(
               controller: _checkDateController,
               decoration: const InputDecoration(
-                  labelText: 'Transaction Date (DD/MM/YYYY)'),
-              keyboardType: TextInputType.datetime,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter the date';
+                labelText: 'Check Date (DD/MM/YYYY)',
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
+              readOnly: true,
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2101),
+                );
+                if (pickedDate != null) {
+                  setState(() {
+                    _checkDateController.text =
+                        "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                  });
                 }
-                return null;
               },
             ),
             const SizedBox(height: 20),
@@ -233,8 +279,7 @@ class _PaymentMethodState extends State<PaymentMethod> {
             const SizedBox(height: 20),
             TextFormField(
               controller: _paymentAmountNumberController,
-              decoration:
-                  const InputDecoration(labelText: 'Payment Amount (Numbers)'),
+              decoration: const InputDecoration(labelText: 'Payment Amount'),
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -293,13 +338,23 @@ class _PaymentMethodState extends State<PaymentMethod> {
             TextFormField(
               controller: _upiTransactionDateController,
               decoration: const InputDecoration(
-                  labelText: 'Transaction Date (DD/MM/YYYY)'),
-              keyboardType: TextInputType.datetime,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter transaction date';
+                labelText: 'Transaction Date (DD/MM/YYYY)',
+                suffixIcon: Icon(Icons.calendar_today),
+              ),
+              readOnly: true,
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2101),
+                );
+                if (pickedDate != null) {
+                  setState(() {
+                    _upiTransactionDateController.text =
+                        "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
+                  });
                 }
-                return null;
               },
             ),
             const SizedBox(

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -181,7 +181,8 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
           });
         } else {
           await FirebaseFirestore.instance.collection('policy').add(policyData);
-          _showConfirmationDialog('Success', 'Policy saved successfully.', () {
+          _showConfirmationDialog('Success', 'Information saved successfully.',
+              () {
             setState(() {
               _isEditing = false;
             });
@@ -211,6 +212,27 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
       }
     } else {
       _showConfirmationDialog('Error', 'No policy selected to delete.', () {});
+    }
+  }
+
+  void _calculateMaturityAmount() {
+    if (_fdAmountController.text.isEmpty ||
+        _fdInterestRateController.text.isEmpty ||
+        _fdYearsController.text.isEmpty) {
+      _fdMaturityAmountController.text = '';
+      return;
+    }
+
+    double principal = double.tryParse(_fdAmountController.text) ?? 0.0;
+    double rateOfInterest =
+        double.tryParse(_fdInterestRateController.text) ?? 0.0;
+    double years = double.tryParse(_fdYearsController.text) ?? 0.0;
+
+    if (principal > 0 && rateOfInterest > 0 && years > 0) {
+      double maturityAmount = principal * pow(1 + rateOfInterest / 100, years);
+      _fdMaturityAmountController.text = maturityAmount.toStringAsFixed(2);
+    } else {
+      _fdMaturityAmountController.text = '';
     }
   }
 
@@ -540,6 +562,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                     decoration: const InputDecoration(labelText: 'FD Amount'),
                     enabled: _isEditing,
                     keyboardType: TextInputType.number,
+                    onChanged: (value) => _calculateMaturityAmount(),
                   ),
                   const SizedBox(height: 16.0),
                   TextFormField(
@@ -548,14 +571,14 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                         const InputDecoration(labelText: 'Rate of Interest'),
                     enabled: _isEditing,
                     keyboardType: TextInputType.number,
+                    onChanged: (value) => _calculateMaturityAmount(),
                   ),
                   const SizedBox(height: 16.0),
                   TextFormField(
                     controller: _fdMaturityAmountController,
                     decoration:
                         const InputDecoration(labelText: 'FD Maturity Amount'),
-                    enabled: _isEditing,
-                    keyboardType: TextInputType.number,
+                    enabled: true, // Keep it non-editable
                   ),
                   const SizedBox(height: 16.0),
                   ElevatedButton(
@@ -703,6 +726,7 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                 ],
 
                 const SizedBox(height: 20),
+
                 ElevatedButton(
                   onPressed: _isEditing ? _saveItem : null,
                   child: const Text('Save'),

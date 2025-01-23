@@ -60,12 +60,13 @@ class _AddPaymentState extends State<AddPayment> {
                   child: DataTable(
                     columns: const [
                       DataColumn(label: Text('Sr. No')),
+                      DataColumn(label: Text('Transaction Date')),
                       DataColumn(label: Text('Payment Method')),
                       DataColumn(label: Text('Card/Check/UPI Number')),
                       DataColumn(label: Text('Payment Amount')),
                       DataColumn(label: Text('Panalty Charges')),
+                      DataColumn(label: Text('Total Payment')),
                       DataColumn(label: Text('Payee Name')),
-                      DataColumn(label: Text('Transaction Date')),
                     ],
                     rows: paymentMethods.asMap().entries.map((entry) {
                       int index = entry.key;
@@ -74,16 +75,19 @@ class _AddPaymentState extends State<AddPayment> {
 
                       String paymentMethod =
                           paymentData['paymentMethod'] ?? 'Unknown';
-                      String paymentAmount = (paymentData['TransactionAmount']
-                                      ?.toString()
-                                      .isNotEmpty ==
-                                  true
-                              ? paymentData['TransactionAmount'].toString()
-                              : paymentData['paymentAmountNumber']
-                                  ?.toString()) ??
-                          'N/A';
+                      String paymentAmountStr =
+                          (paymentData['TransactionAmount']
+                                          ?.toString()
+                                          .isNotEmpty ==
+                                      true
+                                  ? paymentData['TransactionAmount'].toString()
+                                  : paymentData['paymentAmountNumber']
+                                      ?.toString()) ??
+                              '0';
+                      double paymentAmount =
+                          double.tryParse(paymentAmountStr) ?? 0;
 
-                      //Payment ID No
+                      // Payment ID No
                       String transactionid;
                       if (paymentMethod == 'Card') {
                         transactionid = paymentData['cardNumber'] ?? 'N/A';
@@ -109,16 +113,19 @@ class _AddPaymentState extends State<AddPayment> {
                         transactionDate = 'N/A';
                       }
 
-                      String penaltyCharges = 'N/A';
+                      String penaltyChargesStr = '0';
                       if (paymentMethod == 'Card') {
-                        penaltyCharges = paymentData['Penalty'] ?? 'N/A';
+                        penaltyChargesStr = paymentData['Penalty'] ?? '0';
                       } else if (paymentMethod == 'Check') {
-                        penaltyCharges = paymentData['PenaltyCheck'] ?? 'N/A';
+                        penaltyChargesStr = paymentData['PenaltyCheck'] ?? '0';
                       } else if (paymentMethod == 'UPI') {
-                        penaltyCharges = paymentData['PanaltyUpi'] ?? 'N/A';
-                      } else {
-                        transactionDate = 'N/A';
+                        penaltyChargesStr = paymentData['PanaltyUpi'] ?? '0';
                       }
+                      double penaltyCharges =
+                          double.tryParse(penaltyChargesStr) ?? 0;
+
+                      // Calculate Total Payment
+                      double totalPayment = paymentAmount + penaltyCharges;
 
                       // Determine correct payee name field based on payment method
                       String payeeName;
@@ -132,12 +139,14 @@ class _AddPaymentState extends State<AddPayment> {
 
                       return DataRow(cells: [
                         DataCell(Text((index + 1).toString())), // Sr. No
+                        DataCell(Text(transactionDate)),
                         DataCell(Text(paymentMethod)),
                         DataCell(Text(transactionid)),
-                        DataCell(Text(paymentAmount)),
-                        DataCell(Text(penaltyCharges)),
+                        DataCell(Text(paymentAmount.toString())),
+                        DataCell(Text(penaltyCharges.toString())),
+                        DataCell(
+                            Text(totalPayment.toString())), // Total Payment
                         DataCell(Text(payeeName)),
-                        DataCell(Text(transactionDate)),
                       ]);
                     }).toList(),
                   ),
