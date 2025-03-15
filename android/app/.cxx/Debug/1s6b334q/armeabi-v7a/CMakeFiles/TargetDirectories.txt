@@ -1,0 +1,2 @@
+D:/Engg/Freelancing/Final/privacy_app/android/app/.cxx/Debug/1s6b334q/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/Engg/Freelancing/Final/privacy_app/android/app/.cxx/Debug/1s6b334q/armeabi-v7a/CMakeFiles/rebuild_cache.dir

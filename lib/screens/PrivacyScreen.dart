@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img; // Import prefix remains 'img'
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -34,7 +37,9 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
   final _addressController = TextEditingController();
   final _dobController = TextEditingController();
   final _issueDateController = TextEditingController();
+  final _maturaityDateController = TextEditingController();
   final _premiumDueDateController = TextEditingController();
+  final _creditAvailabledaysController = TextEditingController();
   final _finalPremiumDueDateController = TextEditingController();
   final _ageController = TextEditingController();
   final _premiumAmountController = TextEditingController();
@@ -63,8 +68,10 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
   bool _isJointFD = false;
   String? _base64Image; // To store the Base64 encoded image
   File? _imageFile; // To store the image file locally
-
+  DateTime? _premiumDueDate;
   final ImagePicker _picker = ImagePicker();
+
+  get image => null;
 
   @override
   void initState() {
@@ -96,6 +103,9 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
       final issueDate = _issueDateController.text.isNotEmpty
           ? dateFormat.parse(_issueDateController.text)
           : null;
+      final maturaityDate = _maturaityDateController.text.isNotEmpty
+          ? dateFormat.parse(_maturaityDateController.text)
+          : null;
       final premiumDueDate = _premiumDueDateController.text.isNotEmpty
           ? dateFormat.parse(_premiumDueDateController.text)
           : null;
@@ -125,8 +135,11 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
         'address': _addressController.text,
         'dob': dob != null ? Timestamp.fromDate(dob) : null,
         'issueDate': issueDate != null ? Timestamp.fromDate(issueDate) : null,
+        'maturaityDate':
+            maturaityDate != null ? Timestamp.fromDate(maturaityDate) : null,
         'premiumDueDate':
             premiumDueDate != null ? Timestamp.fromDate(premiumDueDate) : null,
+        'creditAvailabledays': _creditAvailabledaysController.text,
         'finalPremiumDueDate': finalPremiumDueDate != null
             ? Timestamp.fromDate(finalPremiumDueDate)
             : null,
@@ -215,6 +228,25 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
     }
   }
 
+  void _updateFinalPremiumDueDate() {
+    if (_premiumDueDateController.text.isNotEmpty &&
+        _creditAvailabledaysController.text.isNotEmpty) {
+      try {
+        DateTime premiumDueDate =
+            dateFormat.parse(_premiumDueDateController.text);
+        int creditDays = int.tryParse(_creditAvailabledaysController.text) ?? 0;
+
+        DateTime finalDate = premiumDueDate.add(Duration(days: creditDays));
+
+        setState(() {
+          _finalPremiumDueDateController.text = dateFormat.format(finalDate);
+        });
+      } catch (e) {
+        print("Error updating final premium due date: $e");
+      }
+    }
+  }
+
   void _calculateMaturityAmount() {
     if (_fdAmountController.text.isEmpty ||
         _fdInterestRateController.text.isEmpty ||
@@ -253,7 +285,9 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
     _addressController.clear();
     _dobController.clear();
     _issueDateController.clear();
+    _maturaityDateController.clear();
     _premiumDueDateController.clear();
+    _creditAvailabledaysController.clear();
     _finalPremiumDueDateController.clear();
     _ageController.clear();
     _premiumAmountController.clear();
@@ -292,9 +326,14 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
     _issueDateController.text = doc['issueDate'] != null
         ? dateFormat.format(doc['issueDate'].toDate())
         : '';
+    _maturaityDateController.text = doc['maturaityDate'] != null
+        ? dateFormat.format(doc['maturaityDate'].toDate())
+        : '';
     _premiumDueDateController.text = doc['premiumDueDate'] != null
         ? dateFormat.format(doc['premiumDueDate'].toDate())
         : '';
+    _creditAvailabledaysController.text =
+        doc['creditAvailabledays']?.toString() ?? '';
     _finalPremiumDueDateController.text = doc['finalPremiumDueDate'] != null
         ? dateFormat.format(doc['finalPremiumDueDate'].toDate())
         : '';
@@ -337,27 +376,33 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime(2100),
     );
+
     if (picked != null) {
       setState(() {
+        // Update the selected date in the relevant controller
         controller.text = dateFormat.format(picked);
 
-        // Check if both issueDate and finalPremiumDueDate are filled, then calculate the policy term
+        // Update policy term if issue date and maturity date are filled
         if (_issueDateController.text.isNotEmpty &&
-            _finalPremiumDueDateController.text.isNotEmpty) {
+            _maturaityDateController.text.isNotEmpty) {
           final issueDate = dateFormat.parse(_issueDateController.text);
-          final finalPremiumDueDate =
-              dateFormat.parse(_finalPremiumDueDateController.text);
+          final maturityDate = dateFormat.parse(_maturaityDateController.text);
 
-          // Calculate the difference in years
-          int policyTerm = finalPremiumDueDate.year - issueDate.year;
-          if (finalPremiumDueDate.month < issueDate.month ||
-              (finalPremiumDueDate.month == issueDate.month &&
-                  finalPremiumDueDate.day < issueDate.day)) {
+          // Calculate the policy term in years
+          int policyTerm = maturityDate.year - issueDate.year;
+          if (maturityDate.month < issueDate.month ||
+              (maturityDate.month == issueDate.month &&
+                  maturityDate.day < issueDate.day)) {
             policyTerm--;
           }
 
-          // Update the policy term controller
           _policyTermController.text = policyTerm.toString();
+        }
+
+        // Handle updates for premium due date and final premium due date
+        if (controller == _premiumDueDateController) {
+          _premiumDueDate = picked;
+          _updateFinalPremiumDueDate();
         }
       });
     }
@@ -396,16 +441,70 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
     }
   }
 
+  // Future<void> _pickImage() async {
+  //   final XFile? pickedFile =
+  //       await _picker.pickImage(source: ImageSource.gallery);
+
+  //   if (pickedFile != null) {
+  //     setState(() {
+  //       _imageFile = File(pickedFile.path);
+  //       _base64Image = base64Encode(
+  //           _imageFile!.readAsBytesSync()); // Convert image to Base64
+  //     });
+  //   }
+  // }
+
   Future<void> _pickImage() async {
+    print("Opening image picker...");
     final XFile? pickedFile =
         await _picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-        _base64Image = base64Encode(
-            _imageFile!.readAsBytesSync()); // Convert image to Base64
-      });
+      print("Image selected: ${pickedFile.path}");
+      try {
+        final file = File(pickedFile.path);
+
+        // Read the image into memory
+        Uint8List imageBytes = await file.readAsBytes();
+        print(
+            "Image read into memory. Size: ${imageBytes.lengthInBytes} bytes");
+
+        // Decode the image for processing
+        img.Image? decodedImage = img.decodeImage(imageBytes);
+        if (decodedImage != null) {
+          print(
+              "Image decoded. Original size: ${decodedImage.width}x${decodedImage.height}");
+
+          // Resize the image to a smaller size (e.g., 300x300)
+          img.Image resizedImage =
+              img.copyResize(decodedImage, width: 500, height: 600);
+          print(
+              "Image resized. New size: ${resizedImage.width}x${resizedImage.height}");
+
+          // Encode the resized image to JPEG
+          List<int> jpegBytes = img.encodeJpg(resizedImage, quality: 90);
+          print(
+              "Image compressed to JPEG. New size: ${jpegBytes.length} bytes");
+
+          // Convert the JPEG bytes to Base64
+          String base64Image = base64Encode(jpegBytes);
+          print(
+              "Image converted to Base64. String length: ${base64Image.length}");
+
+          setState(() {
+            _imageFile = file; // Store the original file for display
+            _base64Image = base64Image; // Use the compressed Base64 string
+          });
+
+          print("Image successfully processed and displayed.");
+        } else {
+          print("Error: Could not decode image.");
+        }
+      } catch (e) {
+        print("An error occurred during image processing: $e");
+      }
+    } else {
+      print("No image selected.");
     }
   }
 
@@ -587,8 +686,12 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                   ),
                   if (_imageFile != null) ...[
                     const SizedBox(height: 16.0),
-                    Image.file(_imageFile!,
-                        height: 100, width: 100, fit: BoxFit.cover),
+                    Image.file(
+                      _imageFile!,
+                      height: 100,
+                      width: 100,
+                      fit: BoxFit.cover,
+                    ),
                   ],
                 ],
                 // Common fields for Insurance and Policy
@@ -656,9 +759,21 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                   ),
                   const SizedBox(height: 16.0),
                   TextFormField(
+                    controller: _maturaityDateController,
+                    decoration:
+                        const InputDecoration(labelText: 'Maturity Date'),
+                    enabled: _isEditing,
+                    onTap: () {
+                      if (_isEditing) {
+                        _selectDate(context, _maturaityDateController);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16.0),
+                  TextFormField(
                     controller: _premiumDueDateController,
                     decoration:
-                        const InputDecoration(labelText: 'Premium Due Date'),
+                        const InputDecoration(labelText: 'Premium Date'),
                     enabled: _isEditing,
                     onTap: () {
                       if (_isEditing) {
@@ -668,15 +783,21 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                   ),
                   const SizedBox(height: 16.0),
                   TextFormField(
-                    controller: _finalPremiumDueDateController,
+                    controller: _creditAvailabledaysController,
                     decoration: const InputDecoration(
-                        labelText: 'Final Premium Due Date'),
+                        labelText: 'Credit Available Days'),
                     enabled: _isEditing,
-                    onTap: () {
-                      if (_isEditing) {
-                        _selectDate(context, _finalPremiumDueDateController);
-                      }
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      _updateFinalPremiumDueDate();
                     },
+                  ),
+                  const SizedBox(height: 16.0),
+                  TextFormField(
+                    controller: _finalPremiumDueDateController,
+                    decoration:
+                        const InputDecoration(labelText: 'Final Premium Date'),
+                    enabled: _isEditing, // Make this field read-only
                   ),
                   const SizedBox(height: 16.0),
                   DropdownButtonFormField<String>(
@@ -720,8 +841,12 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                   ),
                   if (_imageFile != null) ...[
                     const SizedBox(height: 16.0),
-                    Image.file(_imageFile!,
-                        height: 100, width: 100, fit: BoxFit.cover),
+                    Image.file(
+                      _imageFile!,
+                      height: 100,
+                      width: 100,
+                      fit: BoxFit.cover,
+                    ),
                   ],
                 ],
 

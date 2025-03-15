@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:privacy_app/screens/payment_method.dart';
 
+// ignore: must_be_immutable
 class PolicyDetailsPage extends StatelessWidget {
   final Map<String, dynamic> policyData;
   final String documentId;
@@ -19,6 +20,7 @@ class PolicyDetailsPage extends StatelessWidget {
         .collection('Payments')
         .doc(documentId)
         .collection('Methods')
+        .orderBy('tDate', descending: false)
         .snapshots(); // Real-time stream of payment methods
   }
 
@@ -35,7 +37,7 @@ class PolicyDetailsPage extends StatelessWidget {
     'fdNo': 'FD No',
     'fdStartDate': 'FD Start Date',
     'fdUsername': 'FD Holder Name',
-    'finalPremiumDueDate': 'FD Premium Date',
+    'finalPremiumDueDate': 'Final Premium Date',
     'interestRate': 'FD Interest Rate',
     'issueDate': 'Policy Issue Date',
     'name': 'Policy Holder Name',
@@ -65,8 +67,11 @@ class PolicyDetailsPage extends StatelessWidget {
 
     // Filter and create rows for the DataTable, only including non-null/empty values
     List<DataRow> policyRows = policyData.entries
-        .where(
-            (entry) => entry.value != null && entry.value.toString().isNotEmpty)
+        .where((entry) =>
+            entry.value != null &&
+            entry.value.toString().isNotEmpty &&
+            entry.key != 'image' &&
+            entry.key != 'isJointFD')
         .map((entry) {
       String displayName = fieldNameMapping[entry.key] ?? entry.key;
       String valueDisplay;
@@ -84,6 +89,16 @@ class PolicyDetailsPage extends StatelessWidget {
       ]);
     }).toList();
 
+    if (policyData['fdBankName'] != null &&
+        policyData['fdBankName'].toString().isNotEmpty) {
+      String displayName = fieldNameMapping['isJointFD'] ?? 'isJointFD';
+      String valueDisplay = policyData['isJointFD']?.toString() ?? 'N/A';
+
+      policyRows.add(DataRow(cells: [
+        DataCell(Text(displayName)),
+        DataCell(Text(valueDisplay)),
+      ]));
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Policy Details'),
@@ -165,27 +180,27 @@ class PolicyDetailsPage extends StatelessWidget {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(
+                    return const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('No payment methods added yet.'),
-                          const SizedBox(
+                          Text('No payment methods added yet.'),
+                          SizedBox(
                               height:
                                   16), // Add some spacing between text and button
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PaymentMethod(
-                                    documentId: documentId,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: const Text('Add Payment Method'),
-                          ),
+                          // ElevatedButton(
+                          //   onPressed: () {
+                          //     Navigator.push(
+                          //       context,
+                          //       MaterialPageRoute(
+                          //         builder: (context) => PaymentMethod(
+                          //           documentId: documentId,
+                          //         ),
+                          //       ),
+                          //     );
+                          //   },
+                          //   child: const Text('Add Payment Method'),
+                          // ),
                         ],
                       ),
                     );
@@ -213,16 +228,16 @@ class PolicyDetailsPage extends StatelessWidget {
 
                         String paymentMethod =
                             paymentData['paymentMethod'] ?? 'Unknown';
-                        String paymentAmountStr =
-                            (paymentData['TransactionAmount']
-                                            ?.toString()
-                                            .isNotEmpty ==
-                                        true
-                                    ? paymentData['TransactionAmount']
-                                        .toString()
-                                    : paymentData['paymentAmountNumber']
-                                        ?.toString()) ??
-                                '0';
+                        String paymentAmountStr = (paymentData[
+                                            'TransactionAmount']
+                                        ?.toString()
+                                        .isNotEmpty ==
+                                    true
+                                ? paymentData['TransactionAmount'].toString()
+                                : paymentData['cashTransactionAmount']
+                                    ?.toString()) ??
+                            paymentData['paymentAmountNumber']?.toString() ??
+                            '0';
                         double paymentAmount =
                             double.tryParse(paymentAmountStr) ?? 0;
 
@@ -238,18 +253,24 @@ class PolicyDetailsPage extends StatelessWidget {
                           transactionid = 'N/A';
                         }
 
+                        DateTime tDate =
+                            (paymentData['tDate'] as Timestamp).toDate();
+                        String formattedTDate =
+                            DateFormat('dd/MM/yyyy').format(tDate);
+
                         // Determine transaction date based on payment method
                         String transactionDate;
-                        if (paymentMethod == 'Card') {
-                          transactionDate =
-                              paymentData['transactionDate'] ?? 'N/A';
-                        } else if (paymentMethod == 'Check') {
-                          transactionDate = paymentData['checkDate'] ?? 'N/A';
-                        } else if (paymentMethod == 'UPI') {
-                          transactionDate =
-                              paymentData['transactionDate'] ?? 'N/A';
+                        if (paymentData['paymentMethod'] == 'Card') {
+                          transactionDate = formattedTDate;
+                        } else if (paymentData['paymentMethod'] == 'Check') {
+                          transactionDate = formattedTDate;
+                        } else if (paymentData['paymentMethod'] == 'UPI') {
+                          transactionDate = formattedTDate;
+                        } else if (paymentData['paymentMethod'] == 'Cash') {
+                          transactionDate = formattedTDate;
                         } else {
-                          transactionDate = 'N/A';
+                          transactionDate =
+                              formattedTDate; // Default to tDate if no other date exists
                         }
 
                         String penaltyChargesStr = '0';
@@ -260,6 +281,9 @@ class PolicyDetailsPage extends StatelessWidget {
                               paymentData['PenaltyCheck'] ?? '0';
                         } else if (paymentMethod == 'UPI') {
                           penaltyChargesStr = paymentData['PanaltyUpi'] ?? '0';
+                        } else if (paymentMethod == 'Cash') {
+                          penaltyChargesStr =
+                              paymentData['cashPanaltyCash'] ?? '0';
                         }
                         double penaltyCharges =
                             double.tryParse(penaltyChargesStr) ?? 0;
@@ -273,6 +297,10 @@ class PolicyDetailsPage extends StatelessWidget {
                           payeeName = paymentData['sender'] ?? 'N/A';
                         } else if (paymentMethod == 'Check') {
                           payeeName = paymentData['payeeName'] ?? 'N/A';
+                        } else if (paymentMethod == 'UPI') {
+                          payeeName = paymentData['sender'] ?? 'N/A';
+                        } else if (paymentMethod == 'Cash') {
+                          payeeName = paymentData['cashsender'] ?? 'N/A';
                         } else {
                           payeeName = 'N/A';
                         }
@@ -320,7 +348,7 @@ class FullScreenImagePage extends StatelessWidget {
       body: Center(
         child: InteractiveViewer(
           panEnabled: true, // Allow panning
-          boundaryMargin: EdgeInsets.all(20),
+          boundaryMargin: const EdgeInsets.all(20),
           minScale: 0.1, // Minimum scale for zoom
           maxScale: 2.0, // Maximum scale for zoom
           child: Image.memory(image), // Display the image in full screen

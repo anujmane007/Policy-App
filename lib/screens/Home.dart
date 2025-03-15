@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     tzData.initializeTimeZones();
     requestNotificationPermissions();
-    // scheduleNotifications();
+    scheduleNotifications();
     createNotificationChannel();
     _loadPreferredDays();
     listenToPolicyUpdates();
@@ -276,60 +276,60 @@ class _HomeScreenState extends State<HomeScreen> {
 
 //Working 1
 
-  // Future<void> scheduleNotifications() async {
-  //   final snapshot = await FirebaseFirestore.instance
-  //       .collection('policy')
-  //       .where('policyHolder', isEqualTo: widget.userEmail)
-  //       .get();
+  Future<void> scheduleNotifications() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('policy')
+        .where('policyHolder', isEqualTo: widget.userEmail)
+        .get();
 
-  //   for (var doc in snapshot.docs) {
-  //     final data = doc.data();
-  //     final Timestamp? premiumDueDateTimestamp =
-  //         data['premiumDueDate'] as Timestamp?;
-  //     if (premiumDueDateTimestamp != null) {
-  //       final DateTime premiumDueDate = premiumDueDateTimestamp.toDate();
-  //       final DateTime today = DateTime.now();
-  //       final int difference = premiumDueDate.difference(today).inDays + 1;
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final Timestamp? premiumDueDateTimestamp =
+          data['premiumDueDate'] as Timestamp?;
+      if (premiumDueDateTimestamp != null) {
+        final DateTime premiumDueDate = premiumDueDateTimestamp.toDate();
+        final DateTime today = DateTime.now();
+        final int difference = premiumDueDate.difference(today).inDays + 1;
 
-  //       print(difference);
-  //       if (difference == 15) {
-  //         // Schedule notification at 10:25 AM
-  //         final DateTime notificationTime = DateTime(
-  //           today.year,
-  //           today.month,
-  //           today.day,
-  //           10, // 10 AM
-  //           33, // 25 minutes past the hour
-  //         );
+        print(difference);
+        if (difference == 15) {
+          // Schedule notification at 10:25 AM
+          final DateTime notificationTime = DateTime(
+            today.year,
+            today.month,
+            today.day,
+            10, // 10 AM
+            33, // 25 minutes past the hour
+          );
 
-  //         if (notificationTime.isAfter(today)) {
-  //           await AwesomeNotifications().createNotification(
-  //             content: NotificationContent(
-  //               id: doc.hashCode, // Unique ID for the notification
-  //               channelKey: 'basic_channel',
-  //               title: 'Premium Due Reminder',
-  //               body:
-  //                   'Your policy "${data['policyName'] ?? 'Unnamed Policy'}" has a premium due on ${DateFormat('MMMM d, yyyy').format(premiumDueDate)}.',
-  //               notificationLayout: NotificationLayout.BigText, // Expanded text
-  //             ),
-  //             schedule: NotificationCalendar(
-  //               year: notificationTime.year,
-  //               month: notificationTime.month,
-  //               day: notificationTime.day,
-  //               hour: notificationTime.hour,
-  //               minute: notificationTime.minute,
-  //               second: 0,
-  //               millisecond: 0,
-  //               timeZone:
-  //                   await AwesomeNotifications().getLocalTimeZoneIdentifier(),
-  //               repeats: false,
-  //             ),
-  //           );
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
+          if (notificationTime.isAfter(today)) {
+            await AwesomeNotifications().createNotification(
+              content: NotificationContent(
+                id: doc.hashCode, // Unique ID for the notification
+                channelKey: 'basic_channel',
+                title: 'Premium Due Reminder',
+                body:
+                    'Your policy "${data['policyName'] ?? 'Unnamed Policy'}" has a premium due on ${DateFormat('MMMM d, yyyy').format(premiumDueDate)}.',
+                notificationLayout: NotificationLayout.BigText, // Expanded text
+              ),
+              schedule: NotificationCalendar(
+                year: notificationTime.year,
+                month: notificationTime.month,
+                day: notificationTime.day,
+                hour: notificationTime.hour,
+                minute: notificationTime.minute,
+                second: 0,
+                millisecond: 0,
+                timeZone:
+                    await AwesomeNotifications().getLocalTimeZoneIdentifier(),
+                repeats: false,
+              ),
+            );
+          }
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -500,67 +500,80 @@ class _HomeScreenState extends State<HomeScreen> {
                         final String formattedFdEndDate =
                             DateFormat('MMMM d, yyyy').format(fdEndDate);
 
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 8),
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16),
-                            title: Text(
-                              '$policyType - $fdNameOfBank',
-                              style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PolicyDetailsPage(
+                                  policyData: policy,
+                                  documentId: documentId,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Card(
+                            margin: const EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 8),
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15.0),
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 10),
-                                Text('FD Holder Name: $fdUsername'),
-                                Text('Account Number: $fdAccountNumber'),
-                                Text('Interest Rate: $fdInterestRate%'),
-                                Text('FD Start Date: $formattedFdStartDate'),
-                                Text('FD End Date: $formattedFdEndDate'),
-                              ],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Arrow icon to navigate to PrivacyScreen
-                                IconButton(
-                                  icon: const Icon(Icons.arrow_forward_ios,
-                                      size: 16),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => PrivacyScreen(
-                                          userEmail: widget.userEmail,
-                                          uid: documentId,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(16),
+                              title: Text(
+                                '$policyType - $fdNameOfBank',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 10),
+                                  Text('FD Holder Name: $fdUsername'),
+                                  Text('Account Number: $fdAccountNumber'),
+                                  Text('Interest Rate: $fdInterestRate%'),
+                                  Text('FD Start Date: $formattedFdStartDate'),
+                                  Text('FD End Date: $formattedFdEndDate'),
+                                ],
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.arrow_forward_ios,
+                                        size: 16),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => PrivacyScreen(
+                                            userEmail: widget.userEmail,
+                                            uid: documentId,
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                ),
-
-                                // View List icon to navigate to PolicyDetailsPage
-                                IconButton(
-                                  icon: const Icon(Icons.view_list, size: 16),
-                                  onPressed: () {
-                                    // Navigate to the details page and pass the data
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => PolicyDetailsPage(
+                                      );
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.view_list, size: 16),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              PolicyDetailsPage(
                                             policyData: policy,
-                                            documentId: documentId),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
+                                            documentId: documentId,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -580,65 +593,77 @@ class _HomeScreenState extends State<HomeScreen> {
                       final String formattedpremiumDueDate =
                           DateFormat('MMMM d, yyyy').format(premiumDueDate);
 
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 8),
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0),
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(16),
-                          title: Text(
-                            '$policyType - $companyName $policyName',
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                      return InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PolicyDetailsPage(
+                                policyData: policy,
+                                documentId: documentId,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 10, horizontal: 8),
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0),
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 10),
-                              Text('Policy Holder: $name'),
-                              Text('Policy No: $policyNo'),
-                              Text('Premium Date: $formattedpremiumDueDate'),
-                            ],
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Arrow icon to navigate to PrivacyScreen
-                              IconButton(
-                                icon: const Icon(Icons.arrow_forward_ios,
-                                    size: 16),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => PrivacyScreen(
-                                        userEmail: widget.userEmail,
-                                        uid: documentId,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.all(16),
+                            title: Text(
+                              '$policyType - $companyName $policyName',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 10),
+                                Text('Policy Holder: $name'),
+                                Text('Policy No: $policyNo'),
+                                Text('Premium Date: $formattedpremiumDueDate'),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.arrow_forward_ios,
+                                      size: 16),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => PrivacyScreen(
+                                          userEmail: widget.userEmail,
+                                          uid: documentId,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                              ),
-
-                              // View List icon to navigate to PolicyDetailsPage
-                              IconButton(
-                                icon: const Icon(Icons.view_list, size: 16),
-                                onPressed: () {
-                                  // Navigate to the details page and pass the data
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => PolicyDetailsPage(
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.view_list, size: 16),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => PolicyDetailsPage(
                                           policyData: policy,
-                                          documentId: documentId),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
+                                          documentId: documentId,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
