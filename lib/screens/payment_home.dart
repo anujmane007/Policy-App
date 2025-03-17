@@ -391,13 +391,13 @@ class _AddPaymentState extends State<AddPayment> {
                                             context, entry.value.id);
                                       },
                                     ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete),
-                                      onPressed: () {
-                                        _deletePaymentMethodAll(
-                                            context, entry.value.id);
-                                      },
-                                    ),
+                                    // IconButton(
+                                    //   icon: const Icon(Icons.delete),
+                                    //   onPressed: () {
+                                    //     _deletePaymentMethodAll(
+                                    //         context, entry.value.id);
+                                    //   },
+                                    // ),
                                     IconButton(
                                       icon: const Icon(Icons.visibility),
                                       onPressed: () =>
